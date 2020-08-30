@@ -11,12 +11,21 @@ Imports System.Security.Cryptography
 Public Class MainUP
 
     Dim Ver As String = Nothing '当前版本
-    Dim UpXmlUrl As String = Nothing '更新文件地址
+    Dim UpXmlUrl As String = "https://localhost" '更新文件地址
     Dim ServUrl As String = Nothing '服务器文件地址
     Dim ServVer As String = Nothing '服务器版本
     Dim ServMd5 As String = Nothing '服务器MD5
-    Dim FullUrl As String = Nothing '完整下载地址
+    Dim FileName As String = Nothing '服务器文件名
+    Dim FullUrl As String = "https://localhost" '完整下载地址
     Private document As XmlDocument = Nothing
+    Private WithEvents backgroundWorker1 As BackgroundWorker
+
+    Public Sub New()
+        InitializeComponent()
+        Me.backgroundWorker1 = New System.ComponentModel.BackgroundWorker()
+        Me.backgroundWorker1.WorkerSupportsCancellation=True
+    End Sub
+
 
     Private Sub MainUP_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
@@ -36,7 +45,7 @@ Public Class MainUP
             '窗口标题
             Me.Text = CmdArg(2)
             '升级名称
-            Label1.Text = CmdArg(3)
+            lbl_title.Text = CmdArg(3)
             '远程地址
             UpXmlUrl = CmdArg(4)
 
@@ -47,14 +56,10 @@ Public Class MainUP
                 'ElseIf My.Computer.Network.IsAvailable = True Then '网络连接状态为已经连接
             End If
 
-            '创建线程
-            'http://msdn.microsoft.com/ZH-CN/library/y5htx827(v=VS.110,d=hv.2).aspx
-            ThreadPool.QueueUserWorkItem(New WaitCallback(AddressOf ThreadProc_clintUp))
-
         Catch ex As Exception
             err(0) '其他错误
         End Try
-        GC.Collect()
+        'GC.Collect()
 
         'Dim [source] As String = "Hello World!"
 
@@ -71,13 +76,13 @@ Public Class MainUP
 
     End Sub
     '[升级按钮]
-    Private Sub Btn_down_Click(ByVal sender As Object, ByVal e As EventArgs) Handles Btn_down.Click
+    Private Sub downloadButton_Click(ByVal sender As Object, ByVal e As EventArgs) Handles downloadButton.Click
         Try
             ' Start the download operation in the background.
             Me.backgroundWorker1.RunWorkerAsync()
 
             ' Disable the button for the duration of the download.
-            Me.Btn_down.Enabled = False
+            Me.downloadButton.Enabled = False
 
             ' Once you have started the background thread you 
             ' can exit the handler and the application will 
@@ -88,7 +93,7 @@ Public Class MainUP
             ' while checking IsBusy to see if the background task is
             ' still running.
             While Me.backgroundWorker1.IsBusy
-                ProgressBar1.Increment(1)
+                progressBar1.Increment(1)
                 ' Keep UI messages moving, so the form remains 
                 ' responsive during the asynchronous operation.
                 Application.DoEvents()
@@ -98,19 +103,21 @@ Public Class MainUP
         End Try
     End Sub
     '[退出按钮]
-    Private Sub Btn_exit_Click(ByVal sender As Object, ByVal e As EventArgs) Handles Btn_exit.Click
+    Private Sub closeButton_Click(ByVal sender As Object, ByVal e As EventArgs) Handles closeButton.Click
+        If Me.backgroundWorker1.IsBusy Then backgroundWorker1.CancelAsync()
         Application.Exit()
     End Sub
 
     'backgroundWorker1_DoWork
     Private Sub backgroundWorker1_DoWork(
-         ByVal sender As Object,
-         ByVal e As DoWorkEventArgs) _
-         Handles backgroundWorker1.DoWork
+        ByVal sender As Object,
+        ByVal e As DoWorkEventArgs) _
+        Handles backgroundWorker1.DoWork
+
         Try
             My.Computer.Network.DownloadFile(
      ServUrl,
-      My.Computer.FileSystem.SpecialDirectories.Temp & "\" + ServMd5.Substring(1, 6) + ".exe", "", "", False, 3000, True)
+      My.Computer.FileSystem.SpecialDirectories.Temp & "\" + FileName, "", "", True, 30000, True)
 
         Catch ex As Exception
             err(0)
@@ -122,21 +129,22 @@ Public Class MainUP
         ByVal sender As Object,
         ByVal e As RunWorkerCompletedEventArgs) _
         Handles backgroundWorker1.RunWorkerCompleted
+
         On Error Resume Next
         ' Set progress bar to 100% in case it isn't already there.
-        ProgressBar1.Value = 100
+        progressBar1.Value = 100
 
         If e.Error Is Nothing Then
 
             Using md5Hash As Security.Cryptography.MD5 = Security.Cryptography.MD5.Create()
-                Dim hash As String = GetMd5Hash(My.Computer.FileSystem.SpecialDirectories.Temp & "\" + ServMd5.Substring(1, 6) + ".exe")
+                Dim hash As String = GetMd5Hash(My.Computer.FileSystem.SpecialDirectories.Temp & "\" + FileName)
                 If hash <> ServMd5 Then
                     err(2)
                     Exit Sub
                 End If
             End Using
             Threading.Thread.Sleep(500)
-            System.Diagnostics.Process.Start(My.Computer.FileSystem.SpecialDirectories.Temp & "\" + ServMd5.Substring(1, 6) + ".exe")
+            System.Diagnostics.Process.Start(My.Computer.FileSystem.SpecialDirectories.Temp & "\" + FileName)
             Threading.Thread.Sleep(100)
             Application.Exit()
 
@@ -146,35 +154,35 @@ Public Class MainUP
         End If
 
         ' Enable the download button and reset the progress bar.
-        Me.Btn_down.Enabled = True
-        ProgressBar1.Value = 0
+        Me.downloadButton.Enabled = True
+        progressBar1.Value = 0
     End Sub
 
     'TextBox_Msg.Text 线程安全
-    Private Sub SetText(ByVal [text] As String)
+    Private Sub Setlog(ByVal [text] As String)
 
         ' InvokeRequired required compares the thread ID of the
         ' calling thread to the thread ID of the creating thread.
         ' If these threads are different, it returns true.
-        If Me.TextBox_Msg.InvokeRequired Then
-            Dim d As New ContextCallback(AddressOf SetText)
+        If Me.txt_log.InvokeRequired Then
+            Dim d As New ContextCallback(AddressOf Setlog)
             Me.Invoke(d, New Object() {[text]})
         Else
-            Me.TextBox_Msg.Text = [text]
+            Me.txt_log.Text = [text]
         End If
     End Sub
 
     'Label_tip.Text 线程安全
-    Private Sub TipText(ByVal [text] As String)
+    Private Sub Settip(ByVal [text] As String)
 
         ' InvokeRequired required compares the thread ID of the
         ' calling thread to the thread ID of the creating thread.
         ' If these threads are different, it returns true.
-        If Me.Label_tip.InvokeRequired Then
-            Dim d As New ContextCallback(AddressOf TipText)
+        If Me.lbl_tip.InvokeRequired Then
+            Dim d As New ContextCallback(AddressOf Settip)
             Me.Invoke(d, New Object() {[text]})
         Else
-            Me.Label_tip.Text = [text]
+            Me.lbl_tip.Text = [text]
         End If
     End Sub
 
@@ -184,11 +192,11 @@ Public Class MainUP
         ' InvokeRequired required compares the thread ID of the
         ' calling thread to the thread ID of the creating thread.
         ' If these threads are different, it returns true.
-        If Me.Btn_down.InvokeRequired Then
+        If Me.downloadButton.InvokeRequired Then
             Dim d As New ContextCallback(AddressOf Btn_downBool)
             Me.Invoke(d, New Object() {[Bool]})
         Else
-            Me.Btn_down.Enabled = [Bool]
+            Me.downloadButton.Enabled = [Bool]
         End If
     End Sub
 
@@ -198,11 +206,11 @@ Public Class MainUP
         ' InvokeRequired required compares the thread ID of the
         ' calling thread to the thread ID of the creating thread.
         ' If these threads are different, it returns true.
-        If Me.ProgressBar1.InvokeRequired Then
+        If Me.progressBar1.InvokeRequired Then
             Dim d As New ContextCallback(AddressOf ProgressBar1Bool)
             Me.Invoke(d, New Object() {[ProgressBar1]})
         Else
-            Me.ProgressBar1.Visible = [ProgressBar1]
+            Me.progressBar1.Visible = [ProgressBar1]
         End If
     End Sub
 
@@ -211,21 +219,21 @@ Public Class MainUP
         Select Case ErNumber
             Case 1 '网络未连接
                 ' Me.TextBox_Msg.Text = "出现错误，在线升级失败。" + vbCrLf + vbCrLf + "请进入下载首页进行下载升级为最新版本。"
-                Me.SetText("出现错误，在线升级失败。" + vbCrLf + "未成功连接至网络，请检查网络连接和防火墙设置。")
+                Me.Setlog("出现错误，在线升级失败。" + vbCrLf + "未成功连接至网络，请检查网络连接和防火墙设置。")
                 'Me.Label_tip.Text = "在线升级失败"
-                Me.TipText("检测更新失败")
+                Me.Settip("检测更新失败")
             Case 2 '文件效验
                 ' Me.TextBox_Msg.Text = "出现错误，在线升级失败。" + vbCrLf + vbCrLf + "请进入下载首页进行下载升级为最新版本。"
-                Me.SetText("出现错误，在线升级失败。" + vbCrLf + "升级文件效验失败，请尝试重新运行升级程序。")
+                Me.Setlog("出现错误，在线升级失败。" + vbCrLf + "升级文件效验失败，请尝试重新运行升级程序。")
                 'Me.Label_tip.Text = "在线升级失败"
-                Me.TipText("检测更新失败")
+                Me.Settip("检测更新失败")
             Case 3
                 '预留
             Case Else
                 ' Me.TextBox_Msg.Text = "出现错误，在线升级失败。" + vbCrLf + vbCrLf + "请进入下载首页进行下载升级为最新版本。"
-                Me.SetText("出现错误，在线升级失败。" + vbCrLf + "请进入下载首页下载升级补丁升级为最新版本。")
+                Me.Setlog("出现错误，在线升级失败。" + vbCrLf + "请进入下载首页下载升级补丁升级为最新版本。")
                 'Me.Label_tip.Text = "在线升级失败"
-                Me.TipText("检测更新失败")
+                Me.Settip("检测更新失败")
         End Select
 
         'Btn_down.Enabled = False
@@ -310,7 +318,7 @@ Public Class MainUP
     End Sub
 
     '浏览下载页面
-    Private Sub LinkLabel_url_Click(sender As Object, e As EventArgs) Handles LinkLabel_url.Click
+    Private Sub LinkLabel_url_Click(sender As Object, e As EventArgs) Handles link_url.Click
         System.Diagnostics.Process.Start(FullUrl)
     End Sub
 
@@ -339,7 +347,7 @@ Public Class MainUP
                 reader.ReadToFollowing("Log")
                 reader.MoveToFirstAttribute()
                 'TextBox_Msg.Text = reader.Value.ToString
-                SetText(reader.Value.ToString)
+                Setlog(reader.Value.ToString)
                 'output.AppendLine("Content of the title element: " + reader.Value.ToString())
                 reader.ReadToFollowing("Url")
                 reader.MoveToFirstAttribute()
@@ -351,14 +359,18 @@ Public Class MainUP
                 'output.AppendLine("Content of the title element: " + reader.Value.ToString())
                 reader.ReadToFollowing("FullUrl")
                 reader.MoveToFirstAttribute()
-                ServMd5 = reader.Value.ToString
+                FullUrl = reader.Value.ToString
+                'output.AppendLine("Content of the title element: " + reader.Value.ToString())
+                reader.ReadToFollowing("FileName")
+                reader.MoveToFirstAttribute()
+                FileName = reader.Value.ToString
                 'output.AppendLine("Content of the title element: " + reader.Value.ToString())
             End Using
             If Ver = ServVer Then
                 'Me.Label_tip.Text = "当前已是最新版本，无需升级。"
-                TipText("当前已是最新版本，无需升级。")
+                Settip("当前已是最新版本，无需升级。")
                 'Me.TextBox_Msg.Text = "当前版本:" + Ver + vbCrLf + "您已经安装了最新版本，感谢您对粘贴工具的支持。"
-                SetText("当前版本:" + Ver + vbCrLf + "您已经安装了最新版本，感谢您的支持。")
+                Setlog("当前版本:" + Ver + vbCrLf + "您已经安装了最新版本，感谢您的支持。")
                 'Me.ProgressBar1.Visible = False
                 ProgressBar1Bool(False)
                 'Me.Btn_down.Enabled = False
@@ -366,16 +378,23 @@ Public Class MainUP
                 Exit Sub
             End If
             '新版本
-            TipText("发现新版本")
+            Settip("发现新版本")
             '启用升级按钮
             Btn_downBool(True)
 
 
         Catch ex As Exception
-            MsgBox(ex.Message)
-            Application.Exit()
+            err(0)
         End Try
     End Sub
-
-
+    ''' <summary>
+    ''' 启动独立线程检查更新
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    Private Sub MainUP_Shown(sender As Object, e As EventArgs) Handles Me.Shown
+        '创建线程
+        'http://msdn.microsoft.com/ZH-CN/library/y5htx827(v=VS.110,d=hv.2).aspx
+        ThreadPool.QueueUserWorkItem(New WaitCallback(AddressOf ThreadProc_clintUp))
+    End Sub
 End Class

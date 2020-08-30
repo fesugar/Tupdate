@@ -1,12 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<update ver="3.20.11.0">
-<Log text="
-更新说明：
+<update ver="2.0.1.0">
+	<Log text="
+更新说明：2020/12/12
 ------------------
-3.20.11.0
-1.增加 HTML 编辑器"
-> </Log>
-<Url link="https://"> </Url>
-<Md5 hash="1234567890"> </Md5>
-<FullUrl link="1234567890"> </FullUrl>
+2.0.1.0
+1.增加XXXXXX；
+2.修复 XXXXX；
+3.完善XXXXXX；
+4.优化XXXXX。
+"
+> 更新日志 </Log>
+	<Url link="https://localhost/tmp/update.exe"> 升级包下载地址 </Url>
+	<Md5 hash="0123456789abcdef0123456789abcdef"> 升级包文件MD5值 </Md5>
+	<FullUrl url="https://localhost/demo.exe"> 完整包下载地址 </FullUrl>
+	<FileName name="abc.exe"> 存储文件名 </FileName>
 </update>
