@@ -10,20 +10,21 @@ Imports System.Security.Cryptography
 
 Public Class MainUP
 
-    Dim Ver As String = Nothing '当前版本
-    Dim UpXmlUrl As String = "https://localhost" '更新文件地址
+    Dim Ver As String = Application.ProductVersion '当前版本
+    Dim UpXmlUrl As String = System.Text.Encoding.Default.GetString(Convert.FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Zlc3VnYXIvVHVwZGF0ZS90VVAueG1s")) '更新文件地址
     Dim ServUrl As String = Nothing '服务器文件地址
     Dim ServVer As String = Nothing '服务器版本
     Dim ServMd5 As String = Nothing '服务器MD5
     Dim FileName As String = Nothing '服务器文件名
-    Dim FullUrl As String = "https://localhost" '完整下载地址
+    Dim FullUrl As String = System.Text.Encoding.Default.GetString(Convert.FromBase64String("aHR0cHM6Ly9naXRodWIuY29tL2Zlc3VnYXIvVHVwZGF0ZQ==")) '完整下载地址
     Private document As XmlDocument = Nothing
     Private WithEvents backgroundWorker1 As BackgroundWorker
 
     Public Sub New()
         InitializeComponent()
         Me.backgroundWorker1 = New System.ComponentModel.BackgroundWorker()
-        Me.backgroundWorker1.WorkerSupportsCancellation=True
+        Me.backgroundWorker1.WorkerSupportsCancellation = True
+        'Console.WriteLine(Convert.ToBase64String(System.Text.Encoding.Default.GetBytes("")))
     End Sub
 
 
@@ -48,6 +49,8 @@ Public Class MainUP
             lbl_title.Text = CmdArg(3)
             '远程地址
             UpXmlUrl = CmdArg(4)
+            '赋值fullurl地址为升级文件链接
+            FullUrl = CmdArg(4)
 
             ' 判断联网
             If My.Computer.Network.IsAvailable = False Then '网络连接状态为未连接
@@ -384,6 +387,7 @@ Public Class MainUP
 
 
         Catch ex As Exception
+
             err(0)
         End Try
     End Sub
