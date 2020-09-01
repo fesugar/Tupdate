@@ -11,7 +11,7 @@ Imports System.Security.Cryptography
 Public Class MainUP
 
     Dim Ver As String = Application.ProductVersion '当前版本
-    Dim UpXmlUrl As String = System.Text.Encoding.Default.GetString(Convert.FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Zlc3VnYXIvVHVwZGF0ZS90VVAueG1s")) '更新文件地址
+    Dim UpXmlUrl As String = System.Text.Encoding.Default.GetString(Convert.FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Zlc3VnYXIvVHVwZGF0ZS9tYXN0ZXIvdFVQLnhtbA==")) '更新文件地址
     Dim ServUrl As String = Nothing '服务器文件地址
     Dim ServVer As String = Nothing '服务器版本
     Dim ServMd5 As String = Nothing '服务器MD5
